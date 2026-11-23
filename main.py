@@ -1,80 +1,91 @@
-#!/usr/bin/env python3
-"""THE COPPER PLATE — MakeFun entry carrier for Akun 3
-(@cicihandayani), NI22 Wave 7.
+"""THE COPPER PLATE atas nama @cicihandayani (Akun 3) — NI22 Wave 7.
 
-Wave 7 rebuild from scratch (the parked G6 package carried the stale
-pool and was discarded) from the verified fresh pool of Sunday
-22 November 2026: 15 cards + 21 briefs = 36 stories, 7 regions,
-Layout A (three leads, twelve minis, map, ALSO ON in three columns).
-Copper on cream, an engraved-plate broadsheet. Fonts scaled up vs
-Wave 6 so the page stays legible near 300 px. Stdlib-only carrier:
-verifies the PNG signature, reads the IHDR dimensions and REFUSES to
-ship an image that breaks the 1024x1024 gate, copies entry.png
-byte-for-byte into MAKEFUN_OUTPUT_DIR (fallback /output), then
-verifies the copy is byte-identical.
+Plat tembaga ini dicetak sekali dan tidak boleh berubah setelahnya.
+Karena itu program ini menguji platnya lebih dulu — header PNG dan
+batas sisi — sebelum menggandakannya ke keluaran dan menguji ulang
+hasil gandanya sampai terbukti sama persis.
 """
+
 import hashlib
 import os
-import shutil
 import struct
 import sys
+from pathlib import Path
 
-CONCEPT = "THE COPPER PLATE — Sunday's World in One Picture"
+CONCEPT = "THE COPPER PLATE"
 ACCOUNT = "@cicihandayani"
 ACCOUNT_LABEL = "Akun 3"
 BOUNTY = "news-image-20261122"
-STORIES = 36  # 15 cards + 21 briefs, 7 regions
-MAX_SIDE = 1024  # server gate: dimensions must stay within 1x1..1024x1024
+STORIES = 36
+MAX_SIDE = 1024
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-ENTRY = os.path.join(HERE, "entry.png")
-PNG_SIG = b"\x89PNG\r\n\x1a\n"
+MAGIC = b"\x89PNG\r\n\x1a\n"
 
 
-def png_dimensions(path):
-    with open(path, "rb") as f:
-        head = f.read(33)
-    if len(head) < 33 or head[:8] != PNG_SIG:
-        raise ValueError("entry.png: bad PNG signature")
-    if head[12:16] != b"IHDR":
-        raise ValueError("entry.png: first chunk is not IHDR")
-    return struct.unpack(">II", head[16:24])
+def profile(path):
+    """Profil berkas: (sha256 heksadesimal, ukuran dalam byte)."""
+    h = hashlib.sha256()
+    n = 0
+    with path.open("rb") as src:
+        while True:
+            buf = src.read(16384)
+            if not buf:
+                break
+            h.update(buf)
+            n += len(buf)
+    return h.hexdigest(), n
 
 
-def sha256_of(path):
-    with open(path, "rb") as f:
-        return hashlib.sha256(f.read()).hexdigest()
+def dimensions(path):
+    """Tarik lebar dan tinggi dari 33 byte pertama berkas PNG."""
+    with path.open("rb") as src:
+        first = src.read(33)
+    if len(first) != 33:
+        print("33 byte pertama tidak terbaca penuh.", file=sys.stderr)
+        sys.exit(1)
+    if first[0:8] != MAGIC:
+        print("Signature PNG tidak sah.", file=sys.stderr)
+        sys.exit(1)
+    if first[12:16] != b"IHDR":
+        print("Chunk IHDR tidak berada di awal.", file=sys.stderr)
+        sys.exit(1)
+    w, h = struct.unpack(">II", first[16:24])
+    return w, h
 
 
 def main():
-    if not os.path.isfile(ENTRY):
-        print("entry.png not found next to main.py", file=sys.stderr)
-        return 1
-    width, height = png_dimensions(ENTRY)
-    if width > MAX_SIDE or height > MAX_SIDE:
-        print(f"dimension gate: {width}x{height} exceeds {MAX_SIDE}x{MAX_SIDE}",
-              file=sys.stderr)
-        return 1
-    digest = sha256_of(ENTRY)
-    size = os.path.getsize(ENTRY)
-
-    out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR") or "/output"
-    os.makedirs(out_dir, exist_ok=True)
-    dest = os.path.join(out_dir, "entry.png")
-    shutil.copyfile(ENTRY, dest)
-
-    if sha256_of(dest) != digest or os.path.getsize(dest) != size:
-        print("copy verification FAILED: output bytes differ", file=sys.stderr)
+    root = Path(__file__).resolve().parent
+    plate = root / "entry.png"
+    if not plate.is_file():
+        print("entry.png tidak ada.", file=sys.stderr)
         return 1
 
-    print(f"Concept : {CONCEPT}")
-    print(f"Account : {ACCOUNT} ({ACCOUNT_LABEL})")
-    print(f"Bounty  : {BOUNTY}")
-    print(f"File    : entry.png -> {dest}")
-    print(f"Size    : {size} bytes")
-    print(f"Dim     : {width}x{height} px (gate <= {MAX_SIDE}x{MAX_SIDE}: OK)")
-    print(f"SHA256  : {digest}")
-    print(f"Stories : {STORIES} (15 cards + 21 briefs, 7 regions)")
+    w, h = dimensions(plate)
+    # Gerbang dimensi bersifat mutlak: satu piksel berlebih pun ditolak.
+    if w > MAX_SIDE or h > MAX_SIDE:
+        print(f"Plat {w}x{h} lebih besar dari pagu {MAX_SIDE}.", file=sys.stderr)
+        return 1
+
+    sha_src, size_src = profile(plate)
+
+    out_path = Path(os.environ.get("MAKEFUN_OUTPUT_DIR", "/output"))
+    out_path.mkdir(parents=True, exist_ok=True)
+    copy_path = out_path / "entry.png"
+    copy_path.write_bytes(plate.read_bytes())
+
+    sha_dst, size_dst = profile(copy_path)
+    if sha_dst != sha_src or size_dst != size_src:
+        print("Ganda plat tidak sama dengan plat asal.", file=sys.stderr)
+        return 1
+
+    print(f"Concept: {CONCEPT}")
+    print(f"Account: {ACCOUNT} ({ACCOUNT_LABEL})")
+    print(f"Bounty: {BOUNTY}")
+    print("File: entry.png")
+    print(f"Size: {size_src}")
+    print(f"Dim: {w}x{h}")
+    print(f"SHA256: {sha_src}")
+    print(f"Stories: {STORIES}")
     print("Copy verified byte-identical.")
     return 0
 

@@ -1,23 +1,25 @@
-# THE COPPER PLATE — NI22 Wave 7 · Akun 3 (@cicihandayani)
+# THE COPPER PLATE — news-image-20261122 — Akun 3
 
-Bounty: `news-image-20261122` (make.fun) · Akun 3 · tutup 24 Nov 2026 07:00 WIB
+Entry gambar berita milik @cicihandayani (Akun 3) untuk bounty
+news-image-20261122 di make.fun, dikerjakan pada gelombang 7.
 
-## Gelombang 7 — bangun ulang dari nol
-Paket parkir G6 akun ini membawa pool LAMA sehingga dibuang; G7 dibangun
-ulang dari nol. Konsep akun ini (THE COPPER PLATE — broadsheet plat tembaga
-di atas krem, Layout A: tiga lead + 12 mini + peta + ALSO ON 3 kolom).
-Dibangun dari pool terverifikasi Minggu 22 November 2026 (bedah Top 1 §4):
-15 kartu + 21 brief = **36 cerita**, 7 region, strip angka hari ini
-(186/161/35%/$120bn/720/9/50), timeline UTC 6 slot, peta dotted berpin
-bernomor = nomor kartu, DATE CHECK buangan bernama 19–21 Nov, tag
-kepastian+sumber per kartu (100%).
+## Gelombang 7
+
+Gelombang ketujuh ini berdiri di atas pool segar Minggu 22 Nov
+2026 — gabungan 15 kartu dan 21 brief yang membentuk 36 cerita
+dari 7 region. Kanvasnya memuat strip angka 186 / 161 / 35% /
+$120bn / 720 / 9 / 50. Bahan yang tidak lolos DATE CHECK dibuang
+sebagai buangan bernama, tercatat jelas dan tidak dipakai lagi.
 
 ## Entry
-- Dimensi: **1024 × 1024 px** (lolos gate server)
-- Ukuran: **228.024 byte**
-- sha256: **996a076c626166c755beabe1e37be589cb170b4f3372411d471a2210d6572e23**
-- Pemenang duel: **varian A** (lihat `duel.md`)
-- Margin checker (daftar segar G7): **13/13**
 
-Catatan: akun ini ditembak HANYA bila can_submit segar pulih TRUE
-(cap reputasi saat G6).
+- Dimensi: 1024x1024 piksel, memenuhi gerbang 1024x1024
+- Ukuran: 228024 byte
+- SHA256: 996a076c626166c755beabe1e37be589cb170b4f3372411d471a2210d6572e23
+- Margin checker: 13/13 lulus
+
+`main.py` memakai pustaka standar Python saja. Alurnya: membaca
+33 byte pertama `entry.png` untuk memverifikasi signature PNG dan
+IHDR serta dimensinya, menolak sisi di atas 1024, menyalin berkas
+ke direktori keluaran byte-for-byte, lalu memverifikasi salinan
+itu identik lewat sha256 dan ukuran.
